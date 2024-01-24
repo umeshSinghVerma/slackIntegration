@@ -8,7 +8,7 @@ console.log('this is database', db);
 db.connect();
 let chatbotId = null;
 const oauthRedirect = "https://slackintegration-klh6.onrender.com/slack/oauth_redirect";
-const InstallHtml = `<a href='https://slack.com/oauth/v2/authorize?client_id=6518424113745.6501539481943&scope=chat%3Awrite%2Cim%3Ahistory&redirect_uri=${oauthRedirect}'><img alt="" add="" to="" slack""="" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>`
+const InstallHtml = `<a href='https://slack.com/oauth/v2/authorize?client_id=6518424113745.6511549174791&scope=chat%3Awrite%2Cim%3Ahistory&redirect_uri=${oauthRedirect}'><img alt="" add="" to="" slack""="" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>`
 const customRoutes = [
     {
         path: '/slack/install/:id',
