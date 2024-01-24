@@ -32,6 +32,7 @@ const usersSchema = mongoose.Schema(
             id: String,
         },
         chatbotId:{ type: String, required: false },
+        conversation_id:{ type: String, required: false },
     },
     { _id: false },
 );

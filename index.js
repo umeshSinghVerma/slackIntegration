@@ -4,10 +4,10 @@ const orgInstall = require("./database/auth/store_user_org_install");
 const workspaceAuth = require("./database/auth/store_user_workspace_install");
 const db = require("./database/db");
 
-console.log('this is database',db);
+console.log('this is database', db);
 db.connect();
 let chatbotId = null;
-const oauthRedirect = "https://6fa4-117-219-22-193.ngrok-free.app/slack/oauth_redirect";
+const oauthRedirect = "https://slackintegration-klh6.onrender.com/slack/oauth_redirect";
 const InstallHtml = `<a href='https://slack.com/oauth/v2/authorize?client_id=6518424113745.6501539481943&scope=chat%3Awrite%2Cim%3Ahistory&redirect_uri=${oauthRedirect}'><img alt="" add="" to="" slack""="" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>`
 const customRoutes = [
     {
@@ -32,25 +32,40 @@ const customRoutes = [
 ];
 console.log('this is the chatbot id now', chatbotId);
 const app = new App({
-    signingSecret: '49528dcaebde762b793ca27bdf696a1b',
-    clientId: '6518424113745.6501539481943',
-    clientSecret: 'e7b65503c201a34c33474cd43707856b',
+    
+    signingSecret: 'af0dffd7fe222a8338fcb7d5909304c9',
+    clientId: '6518424113745.6511549174791',
+    clientSecret: 'dea0c84fdf4d476fc3797a61f98ae9a4',
     stateSecret: 'my-state-secret',
     scopes: ['chat:write', 'im:history'],
     customRoutes: customRoutes,
     installationStore: {
         storeInstallation: async (installation) => {
-            let NewUpdatedObjectWithChatBotId={};
-            if(chatbotId){
-                NewUpdatedObjectWithChatBotId={...installation,chatbotId:chatbotId};
-            }else{
-                NewUpdatedObjectWithChatBotId={...installation};
+            let NewUpdatedObjectWithChatBotId = {};
+            let conversation_id="";
+            try {
+                let response = await axios.post("https://py-server-ssra.onrender.com/api/v1/create-conversation", {
+                    chatbot_id: chatbotId
+                }
+                );
+                const responseData = response.data;
+                console.log('this is the response', responseData);
+                conversation_id = responseData.conversation_id;
+            }
+            catch (e) {
+                console.log("this is the error", e);
+                throw new Error("Error generating the conversation id");
+            }
+            if (chatbotId) {
+                NewUpdatedObjectWithChatBotId = { ...installation, chatbotId: chatbotId,conversation_id:conversation_id };
+            } else {
+                NewUpdatedObjectWithChatBotId = { ...installation };
             }
             console.log(NewUpdatedObjectWithChatBotId)
             if (
                 installation.isEnterpriseInstall &&
                 installation.enterprise !== undefined
-            ){
+            ) {
                 return await orgInstall.saveUserOrgInstall(NewUpdatedObjectWithChatBotId);
             }
             if (installation.team !== undefined) {
@@ -82,13 +97,47 @@ const app = new App({
     await app.start(process.env.PORT || 3000);
 
     app.message(/^.*$/, async ({ message, say }) => {
-        let resp = await axios.get('https://api.quotable.io/random');
+        const messageText = message.text;
+
         const userData = await db.findUser(message.team);
         const chatBotId = userData.chatbotId;
-        console.log('this is the assigned chatBotId',chatBotId);
-        const quote = resp.data.content;
-        await say(`Hello,<@${message.user}>,${quote} \n your assigned chatBotid is ${chatBotId}`);
-        console.log('this is message', message);
+        const conversation_id = userData.conversation_id;
+
+        let messageResponse = "";
+
+        try {
+            let response = await axios.post("https://py-server-ssra.onrender.com/api/v1/send-message", {
+                query: `${messageText}`,
+                chatbot_id: chatBotId,
+                conversation_id: conversation_id,
+                messages: [
+                    {
+                        role: "string",
+                        content: "string"
+                    }
+                ]
+            });
+            const responseData = response.data;
+            console.log('this is the response', responseData);
+            messageResponse = responseData.answer;
+            await say(messageResponse);
+        }
+        catch (e) {
+            console.log("this is the error", e);
+            await say("some error has occured");
+        }
+
+
+
+        // let resp = await axios.get('https://api.quotable.io/random');
+        // const userData = await db.findUser(message.team);
+        // const chatBotId = userData.chatbotId;
+        // console.log('this is the assigned chatBotId', chatBotId);
+        // const quote = resp.data.content;
+        // await say(`Hello,<@${message.user}>,${quote} \n your assigned chatBotid is ${chatBotId}`);
+
+        // await say(messageResponse);
+        // console.log('this is message', responseData);
     });
 
     console.log('⚡️ Bolt app is running!');

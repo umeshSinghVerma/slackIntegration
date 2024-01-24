@@ -19,6 +19,7 @@ const saveUserWorkspaceInstall = async function(installation) {
           id: installation.bot.id,
         },
         chatbotId:installation.chatbotId,
+        conversation_id:installation.conversation_id
       },
       {upsert: true},
   );

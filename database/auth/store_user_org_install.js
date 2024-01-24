@@ -20,6 +20,7 @@ const saveUserOrgInstall = async function(installation) {
         authVersion: installation.authVersion,
         bot: 'null',
         chatbotId:installation.chatbotId,
+        conversation_id:installation.conversation_id
       },
       {upsert: true},
   );
