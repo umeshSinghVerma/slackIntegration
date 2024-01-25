@@ -96,59 +96,118 @@ function isWithinLast12Hours(timestamp) {
 
         const userId = message.user;
         const messageText = message.text;
-        console.log("this is the message",message);
+        console.log("this is the message", message);
         const userInfo = await db.findUserInfo(userId);
         const MessageTimeStamp = new Date().getTime();
-        const previousMessages = userInfo?.messages;
-        console.log('this is previousMessages above ',previousMessages,"is witing ",isWithinLast12Hours(previousMessages[previousMessages.length-1].timestamp));
-        console.log('testing go inside ',userInfo && previousMessages &&  isWithinLast12Hours(previousMessages[previousMessages.length-1].timestamp));
-        if (userInfo && previousMessages &&  isWithinLast12Hours(previousMessages[previousMessages.length-1].timestamp)) {
-            console.log('now the messages are coming here',userInfo);
-            const chatBotId = userInfo.chatbotId;
-            const conversation_id = userInfo.conversation_id;
+        if (userInfo) {
             const previousMessages = userInfo.messages;
-            console.log('chatbot_id,conversation_id',chatBotId,conversation_id);
-            let messageResponse = "";
-            try {
-                let response = await axios.post("https://py-server-ssra.onrender.com/api/v1/send-message", {
-                    query: `${messageText}`,
-                    chatbot_id: chatBotId,
-                    conversation_id: conversation_id,
-                    messages: previousMessages
-                });
-                const responseData = response.data;
-                console.log('this is the response', responseData);
-                messageResponse = responseData.answer;
-                const ReplyTimeStamp = new Date().getTime();
-                
-                const newMessages = [
-                    {
-                        role: "user",
-                        content: messageText,
-                        timestamp: MessageTimeStamp
-                    },
-                    {
-                        role: "assistant",
-                        content: messageResponse,
-                        timestamp: ReplyTimeStamp
+            if (previousMessages.length > 0 && isWithinLast12Hours(previousMessages[previousMessages.length - 1].timestamp)) {
+                console.log('now the messages are coming here', userInfo);
+                const chatBotId = userInfo.chatbotId;
+                const conversation_id = userInfo.conversation_id;
+                console.log('chatbot_id,conversation_id', chatBotId, conversation_id);
+                let messageResponse = "";
+                try {
+                    let response = await axios.post("https://py-server-ssra.onrender.com/api/v1/send-message", {
+                        query: `${messageText}`,
+                        chatbot_id: chatBotId,
+                        conversation_id: conversation_id,
+                        messages: previousMessages
+                    });
+                    const responseData = response.data;
+                    console.log('this is the response', responseData);
+                    messageResponse = responseData.answer;
+                    const ReplyTimeStamp = new Date().getTime();
+
+                    const newMessages = [
+                        {
+                            role: "user",
+                            content: messageText,
+                            timestamp: MessageTimeStamp
+                        },
+                        {
+                            role: "assistant",
+                            content: messageResponse,
+                            timestamp: ReplyTimeStamp
+                        }
+                    ];
+                    const messageSaving = await db.addNewMessagesInUserInfo(userId, newMessages);
+                    console.log('this is message saving', messageSaving);
+                    await say(messageResponse);
+                }
+                catch (e) {
+                    console.log("this is the error", e);
+                    await say("some error has occured");
+                }
+            }
+            else {
+                const teamId = message.team;
+                const teamInfo = await db.findTeam(teamId);
+                const chatBotId = teamInfo.chatbotId;
+                console.log('this is team Info', teamInfo);
+                console.log('this is the chatbot id', chatBotId);
+                const userId = message.user;
+                let conversation_id = "";
+                try {
+                    let response = await axios.post("https://py-server-ssra.onrender.com/api/v1/create-conversation", {
+                        chatbot_id: `${chatBotId}`
                     }
-                ];
-                const messageSaving = await db.addNewMessagesInUserInfo(userId, newMessages);
-                console.log('this is message saving',messageSaving);
-                await say(messageResponse);
+                    );
+                    const responseData = response.data;
+                    console.log('this is the response', responseData);
+                    conversation_id = responseData.conversation_id;
+                    const saving = await workspaceAuth.saveUserInfo(userId, chatBotId, conversation_id);
+                    console.log('this is the saving', saving);
+                }
+                catch (e) {
+                    console.log("this is the error", e);
+                    await say("Error generating the conversation id");
+                    throw new Error("Error generating the conversation id");
+                }
+                let messageResponse = "";
+                try {
+                    let response = await axios.post("https://py-server-ssra.onrender.com/api/v1/send-message", {
+                        query: `${messageText}`,
+                        chatbot_id: chatBotId,
+                        conversation_id: conversation_id,
+                        messages: []
+                    });
+                    const responseData = response.data;
+                    console.log('this is the response', responseData);
+                    messageResponse = responseData.answer;
+                    const ReplyTimeStamp = new Date().getTime();
+
+                    const newMessages = [
+                        {
+                            role: "user",
+                            content: messageText,
+                            timestamp: MessageTimeStamp
+                        },
+                        {
+                            role: "assistant",
+                            content: messageResponse,
+                            timestamp: ReplyTimeStamp
+                        }
+                    ];
+                    const messageSaving = await db.addNewMessagesInUserInfo(userId, newMessages);
+                    console.log('this is message saving', messageSaving);
+                    await say(messageResponse);
+                }
+                catch (e) {
+                    console.log("this is the error", e);
+                    await say("some error has occured");
+                }
+
             }
-            catch (e) {
-                console.log("this is the error", e);
-                await say("some error has occured");
-            }
-        } else {
+        }
+        else {
             const teamId = message.team;
             const teamInfo = await db.findTeam(teamId);
             const chatBotId = teamInfo.chatbotId;
-            console.log('this is team Info',teamInfo);
-            console.log('this is the chatbot id',chatBotId);
+            console.log('this is team Info', teamInfo);
+            console.log('this is the chatbot id', chatBotId);
             const userId = message.user;
-            let conversation_id="";
+            let conversation_id = "";
             try {
                 let response = await axios.post("https://py-server-ssra.onrender.com/api/v1/create-conversation", {
                     chatbot_id: `${chatBotId}`
@@ -157,7 +216,7 @@ function isWithinLast12Hours(timestamp) {
                 const responseData = response.data;
                 console.log('this is the response', responseData);
                 conversation_id = responseData.conversation_id;
-                const saving = await workspaceAuth.saveUserInfo(userId,chatBotId,conversation_id);
+                const saving = await workspaceAuth.saveUserInfo(userId, chatBotId, conversation_id);
                 console.log('this is the saving', saving);
             }
             catch (e) {
@@ -177,7 +236,7 @@ function isWithinLast12Hours(timestamp) {
                 console.log('this is the response', responseData);
                 messageResponse = responseData.answer;
                 const ReplyTimeStamp = new Date().getTime();
-                
+
                 const newMessages = [
                     {
                         role: "user",
@@ -191,7 +250,7 @@ function isWithinLast12Hours(timestamp) {
                     }
                 ];
                 const messageSaving = await db.addNewMessagesInUserInfo(userId, newMessages);
-                console.log('this is message saving',messageSaving);
+                console.log('this is message saving', messageSaving);
                 await say(messageResponse);
             }
             catch (e) {
