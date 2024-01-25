@@ -36,9 +36,9 @@ const customRoutes = [
 console.log('this is the chatbot id now', chatbotId);
 const app = new App({
 
-    signingSecret: process.env.signingSecret,
-    clientId: process.env.clientId,
-    clientSecret: process.env.clientSecret,
+    signingSecret: `${process.env.signingSecret}`,
+    clientId: `${process.env.clientId}`,
+    clientSecret: `${process.env.clientSecret}`,
     stateSecret: 'my-state-secret',
     scopes: ['chat:write', 'im:history'],
     customRoutes: customRoutes,
