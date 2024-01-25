@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config()
 
-const uri = `${process.env.mongoUrl}`;
+const uri = "mongodb+srv://usv0308:umesh0308@cluster0.pbdpdct.mongodb.net/slacktest?retryWrites=true&w=majority";
 const connect = async function () {
     // Connect to MongoDB
     mongoose.connect(
