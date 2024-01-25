@@ -8,7 +8,7 @@ const db = require("./database/db");
 console.log('this is database', db);
 db.connect();
 let chatbotId = null;
-const oauthRedirect = `${process.env.baseUrl}/slack/oauth_redirect`;
+const oauthRedirect = `https://slackintegration-klh6.onrender.com/slack/oauth_redirect`;
 // const oauthRedirect = `${process.env.baseUrlLocal}/slack/oauth_redirect`;
 // const oauthRedirect = "https://abeb-117-219-22-193.ngrok-free.app/slack/oauth_redirect";
 const InstallHtml = `<a href='https://slack.com/oauth/v2/authorize?client_id=6518424113745.6511549174791&scope=chat%3Awrite%2Cim%3Ahistory&redirect_uri=${oauthRedirect}'><img alt="" add="" to="" slack""="" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>`
@@ -36,9 +36,9 @@ const customRoutes = [
 console.log('this is the chatbot id now', chatbotId);
 const app = new App({
 
-    signingSecret: `${process.env.signingSecret}`,
-    clientId: `${process.env.clientId}`,
-    clientSecret: `${process.env.clientSecret}`,
+    signingSecret: "af0dffd7fe222a8338fcb7d5909304c9",
+    clientId: "6518424113745.6511549174791",
+    clientSecret: 'dea0c84fdf4d476fc3797a61f98ae9a4',
     stateSecret: 'my-state-secret',
     scopes: ['chat:write', 'im:history'],
     customRoutes: customRoutes,
