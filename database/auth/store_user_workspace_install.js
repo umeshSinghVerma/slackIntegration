@@ -25,4 +25,26 @@ const saveUserWorkspaceInstall = async function(installation) {
   );
   return resp;
 };
-module.exports = {saveUserWorkspaceInstall};
+const saveTeamInfo = async function(teamId,chatBotId) {
+  const resp = await model.Team.updateOne(
+      {_id: teamId},
+      {
+        chatbotId:chatBotId,
+      },
+      {upsert: true},
+  );
+  return resp;
+};
+const saveUserInfo = async function(userId,chatBotId,conversation_id) {
+  const resp = await model.UserInfo.updateOne(
+      {_id: userId},
+      {
+        chatbotId:chatBotId,
+        conversation_id:conversation_id
+      },
+      {upsert: true},
+  );
+  return resp;
+};
+
+module.exports = {saveUserWorkspaceInstall,saveTeamInfo,saveUserInfo};

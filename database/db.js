@@ -31,13 +31,31 @@ const usersSchema = mongoose.Schema(
             userId: String,
             id: String,
         },
-        chatbotId:{ type: String, required: false },
-        conversation_id:{ type: String, required: false },
+        chatbotId: { type: String, required: false },
+        conversation_id: { type: String, required: false },
     },
     { _id: false },
 );
 
+const teamsSchema = mongoose.Schema(
+    {
+        _id: String,
+        chatbotId: String
+    },
+    { _id: false },
+)
+const usersInfoSchema = mongoose.Schema(
+    {
+        _id: String,
+        conversation_id: String,
+        chatbotId: String
+    },
+    { _id: false }
+)
+
 const User = mongoose.model('User', usersSchema);
+const Team = mongoose.model('Team', teamsSchema);
+const UserInfo = mongoose.model('UserInfo',usersInfoSchema)
 
 const findUser = async function (id) {
     try {
@@ -50,9 +68,35 @@ const findUser = async function (id) {
         console.error(error);
     }
 };
+const findTeam = async function (id) {
+    try {
+        const team = await Team.find({ _id: id });
+        // return first user we find
+        if (team[0] != undefined) {
+            return team[0];
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+const findUserInfo = async function (id) {
+    try {
+        const userInfo = await UserInfo.find({ _id: id });
+        // return first user we find
+        if (userInfo[0] != undefined) {
+            return userInfo[0];
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
 
 module.exports = {
     User,
+    Team,
+    UserInfo,
     connect,
     findUser,
+    findTeam,
+    findUserInfo
 };
