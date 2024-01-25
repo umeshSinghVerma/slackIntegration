@@ -1,5 +1,6 @@
 const { App } = require('@slack/bolt')
 const axios = require('axios')
+require('dotenv').config()
 const orgInstall = require("./database/auth/store_user_org_install");
 const workspaceAuth = require("./database/auth/store_user_workspace_install");
 const db = require("./database/db");
@@ -7,7 +8,8 @@ const db = require("./database/db");
 console.log('this is database', db);
 db.connect();
 let chatbotId = null;
-const oauthRedirect = "https://slackintegration-klh6.onrender.com/slack/oauth_redirect";
+const oauthRedirect = `${process.env.baseUrl}/slack/oauth_redirect`;
+// const oauthRedirect = `${process.env.baseUrlLocal}/slack/oauth_redirect`;
 // const oauthRedirect = "https://abeb-117-219-22-193.ngrok-free.app/slack/oauth_redirect";
 const InstallHtml = `<a href='https://slack.com/oauth/v2/authorize?client_id=6518424113745.6511549174791&scope=chat%3Awrite%2Cim%3Ahistory&redirect_uri=${oauthRedirect}'><img alt="" add="" to="" slack""="" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>`
 const customRoutes = [
@@ -34,9 +36,9 @@ const customRoutes = [
 console.log('this is the chatbot id now', chatbotId);
 const app = new App({
 
-    signingSecret: 'af0dffd7fe222a8338fcb7d5909304c9',
-    clientId: '6518424113745.6511549174791',
-    clientSecret: 'dea0c84fdf4d476fc3797a61f98ae9a4',
+    signingSecret: process.env.signingSecret,
+    clientId: process.env.clientId,
+    clientSecret: process.env.clientSecret,
     stateSecret: 'my-state-secret',
     scopes: ['chat:write', 'im:history'],
     customRoutes: customRoutes,
@@ -81,6 +83,12 @@ const app = new App({
         stateVerification: false
     }
 });
+function isWithinLast12Hours(timestamp) {
+    const twelveHoursInMilliseconds = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+    // const twelveHoursInMilliseconds = 120 * 1000; 
+    const currentTime = new Date().getTime();
+    return currentTime - timestamp <= twelveHoursInMilliseconds;
+}
 (async () => {
     await app.start(process.env.PORT || 3000);
 
@@ -90,10 +98,15 @@ const app = new App({
         const messageText = message.text;
         console.log("this is the message",message);
         const userInfo = await db.findUserInfo(userId);
-        if (userInfo) {
+        const MessageTimeStamp = new Date().getTime();
+        const previousMessages = userInfo?.messages;
+        console.log('this is previousMessages above ',previousMessages,"is witing ",isWithinLast12Hours(previousMessages[previousMessages.length-1].timestamp));
+        console.log('testing go inside ',userInfo && previousMessages &&  isWithinLast12Hours(previousMessages[previousMessages.length-1].timestamp));
+        if (userInfo && previousMessages &&  isWithinLast12Hours(previousMessages[previousMessages.length-1].timestamp)) {
             console.log('now the messages are coming here',userInfo);
             const chatBotId = userInfo.chatbotId;
             const conversation_id = userInfo.conversation_id;
+            const previousMessages = userInfo.messages;
             console.log('chatbot_id,conversation_id',chatBotId,conversation_id);
             let messageResponse = "";
             try {
@@ -101,16 +114,27 @@ const app = new App({
                     query: `${messageText}`,
                     chatbot_id: chatBotId,
                     conversation_id: conversation_id,
-                    messages: [
-                        {
-                            role: "string",
-                            content: "string"
-                        }
-                    ]
+                    messages: previousMessages
                 });
                 const responseData = response.data;
                 console.log('this is the response', responseData);
                 messageResponse = responseData.answer;
+                const ReplyTimeStamp = new Date().getTime();
+                
+                const newMessages = [
+                    {
+                        role: "user",
+                        content: messageText,
+                        timestamp: MessageTimeStamp
+                    },
+                    {
+                        role: "assistant",
+                        content: messageResponse,
+                        timestamp: ReplyTimeStamp
+                    }
+                ];
+                const messageSaving = await db.addNewMessagesInUserInfo(userId, newMessages);
+                console.log('this is message saving',messageSaving);
                 await say(messageResponse);
             }
             catch (e) {
@@ -147,16 +171,27 @@ const app = new App({
                     query: `${messageText}`,
                     chatbot_id: chatBotId,
                     conversation_id: conversation_id,
-                    messages: [
-                        {
-                            role: "string",
-                            content: "string"
-                        }
-                    ]
+                    messages: []
                 });
                 const responseData = response.data;
                 console.log('this is the response', responseData);
                 messageResponse = responseData.answer;
+                const ReplyTimeStamp = new Date().getTime();
+                
+                const newMessages = [
+                    {
+                        role: "user",
+                        content: messageText,
+                        timestamp: MessageTimeStamp
+                    },
+                    {
+                        role: "assistant",
+                        content: messageResponse,
+                        timestamp: ReplyTimeStamp
+                    }
+                ];
+                const messageSaving = await db.addNewMessagesInUserInfo(userId, newMessages);
+                console.log('this is message saving',messageSaving);
                 await say(messageResponse);
             }
             catch (e) {

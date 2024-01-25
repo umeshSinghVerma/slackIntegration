@@ -40,7 +40,8 @@ const saveUserInfo = async function(userId,chatBotId,conversation_id) {
       {_id: userId},
       {
         chatbotId:chatBotId,
-        conversation_id:conversation_id
+        conversation_id:conversation_id,
+        messages:[]
       },
       {upsert: true},
   );

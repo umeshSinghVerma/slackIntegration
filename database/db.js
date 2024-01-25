@@ -1,10 +1,7 @@
 const mongoose = require('mongoose');
+require('dotenv').config()
 
-const urid = 'mongodb+srv://' + process.env.DB_USERNAME + ':' +
-    process.env.DB_PASSWORD +
-    '@cluster0.yvswg.mongodb.net/' + process.env.DB_NAME +
-    '?retryWrites=true&w=majority';
-const uri = 'mongodb+srv://usv0308:umesh0308@cluster0.pbdpdct.mongodb.net/slacktest?retryWrites=true&w=majority';
+const uri = process.env.mongoUrl;
 const connect = async function () {
     // Connect to MongoDB
     mongoose.connect(
@@ -48,14 +45,21 @@ const usersInfoSchema = mongoose.Schema(
     {
         _id: String,
         conversation_id: String,
-        chatbotId: String
+        chatbotId: String,
+        messages: [
+            {
+                role: String,
+                content: String,
+                timestamp: Number
+            }
+        ]
     },
     { _id: false }
 )
 
 const User = mongoose.model('User', usersSchema);
 const Team = mongoose.model('Team', teamsSchema);
-const UserInfo = mongoose.model('UserInfo',usersInfoSchema)
+const UserInfo = mongoose.model('UserInfo', usersInfoSchema)
 
 const findUser = async function (id) {
     try {
@@ -90,7 +94,20 @@ const findUserInfo = async function (id) {
         console.error(error);
     }
 }
+const addNewMessagesInUserInfo = async function (userId, newMessages) {
+    try {
+        const updateUserInfo = await UserInfo.updateOne(
+            { _id: userId },
+            { $push: { messages: { $each: newMessages } } }
+        );
 
+        console.log("Messages added successfully:", updateUserInfo);
+        return updateUserInfo;
+    } catch (e) {
+        console.error('Error in adding message in user info', e);
+        return null;
+    }
+};
 module.exports = {
     User,
     Team,
@@ -98,5 +115,6 @@ module.exports = {
     connect,
     findUser,
     findTeam,
-    findUserInfo
+    findUserInfo,
+    addNewMessagesInUserInfo
 };
