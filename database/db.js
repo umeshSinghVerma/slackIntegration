@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config()
 
-const uri = "mongodb+srv://usv0308:umesh0308@cluster0.pbdpdct.mongodb.net/slacktest?retryWrites=true&w=majority";
+const uri = "mongodb+srv://bluerocketdev:ertDeq28eTZ8taq7@cluster0.iz8l3rd.mongodb.net/?retryWrites=true&w=majority";
 const connect = async function () {
     // Connect to MongoDB
     mongoose.connect(
